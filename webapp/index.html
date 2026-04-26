@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Beauty Shop</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        :root {
+            --primary: #1e4d2e; /* Elegant Dark Green */
+            --primary-light: #e8f0e8;
+            --text-main: #1a1a1a;
+            --text-muted: #999999;
+            --bg: #ffffff;
+            --bg-page: #f9f9f9;
+            --border: #f0f0f0;
+            --accent: #f39c12; /* Gold for stars */
+        }
+        
+        body {
+            background: var(--bg-page);
+            color: var(--text-main);
+            font-family: 'Inter', sans-serif;
+            padding: 20px;
+            margin: 0;
+            padding-bottom: 40px;
+        }
+
+        .header {
+            text-align: center;
+            margin: 10px 0 30px;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            font-weight: 600;
+            margin: 0 0 5px;
+            color: var(--text-main);
+            letter-spacing: -0.5px;
+        }
+
+        .header p {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin: 0;
+            font-weight: 500;
+        }
+
+        .filters {
+            display: flex;
+            overflow-x: auto;
+            gap: 10px;
+            margin-bottom: 25px;
+            padding-bottom: 5px;
+        }
+
+        .filters::-webkit-scrollbar { display: none; }
+
+        .filter-pill {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 500;
+            white-space: nowrap;
+            color: var(--text-main);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .filter-pill.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .card {
+            background: var(--bg);
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.04);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .image-container {
+            position: relative;
+            width: 100%;
+            padding-top: 100%; /* 1:1 Aspect Ratio */
+            background: #f5f5f5;
+        }
+
+        .image-container img {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            object-fit: cover;
+        }
+
+        .badge {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: var(--primary);
+            color: white;
+            font-size: 10px;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        .add-cart-btn {
+            position: absolute;
+            bottom: -16px;
+            right: 12px;
+            background: white;
+            border: none;
+            width: 34px; height: 34px;
+            border-radius: 50%;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer;
+            transition: 0.2s;
+            color: var(--text-main);
+            z-index: 2;
+        }
+
+        .add-cart-btn svg {
+            width: 16px; height: 16px;
+        }
+
+        .add-cart-btn.added {
+            background: var(--primary);
+            color: white;
+            transform: scale(1.1);
+        }
+
+        .info {
+            padding: 16px 12px 12px;
+        }
+
+        .meta {
+            display: flex;
+            justify-content: space-between;
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+            font-weight: 500;
+        }
+
+        .rating {
+            color: var(--text-main);
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 2px;
+        }
+        
+        .rating span {
+            color: var(--accent);
+        }
+
+        .title {
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            line-height: 1.3;
+            color: var(--text-main);
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            height: 34px;
+        }
+
+        .price-row {
+            display: flex;
+            align-items: baseline;
+            gap: 6px;
+        }
+
+        .price {
+            color: var(--primary);
+            font-weight: 700;
+            font-size: 15px;
+        }
+
+        .old-price {
+            color: var(--text-muted);
+            text-decoration: line-through;
+            font-size: 11px;
+            font-weight: 500;
+        }
+
+        .loader {
+            text-align: center;
+            color: var(--text-muted);
+            grid-column: span 2;
+            padding: 40px 0;
+            font-weight: 500;
+        }
+        
+        .empty-state {
+            text-align: center;
+            color: var(--text-muted);
+            grid-column: span 2;
+            padding: 40px 0;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>Shop</h1>
+        <p>Home / Shop</p>
+    </div>
+
+    <div class="filters">
+        <div class="filter-pill active" onclick="setFilter(this, 'All Products')">All Products</div>
+        <div class="filter-pill" onclick="setFilter(this, 'Skin Care')">Skin Care</div>
+        <div class="filter-pill" onclick="setFilter(this, 'Makeup')">Makeup</div>
+        <div class="filter-pill" onclick="setFilter(this, 'Hair Care')">Hair Care</div>
+        <div class="filter-pill" onclick="setFilter(this, 'Body Care')">Body Care</div>
+    </div>
+
+    <div class="grid" id="products-grid">
+        <div class="loader">Loading products...</div>
+    </div>
+
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.expand(); 
+
+        tg.setHeaderColor('#f9f9f9');
+        tg.MainButton.textColor = "#ffffff";
+        tg.MainButton.color = "#1e4d2e";
+
+        tg.MainButton.onClick(() => {
+            const selectedItems = [];
+            for(let id in cart) {
+                selectedItems.push({id: parseInt(id), qty: cart[id]});
+            }
+            tg.HapticFeedback.impactOccurred('medium');
+            tg.sendData(JSON.stringify(selectedItems));
+        });
+
+        let cart = {};
+        let products = [];
+        
+        // Verified, high-quality cosmetic images that are guaranteed to load
+        const images = [
+            "https://images.unsplash.com/photo-1596462502278-27bf85033e5a?auto=format&fit=crop&w=400&q=80",
+            "https://images.unsplash.com/photo-1620916566398-39f1143ab7be?auto=format&fit=crop&w=400&q=80",
+            "https://images.unsplash.com/photo-1522337660859-02fbefca4702?auto=format&fit=crop&w=400&q=80",
+            "https://images.unsplash.com/photo-1571781926291-c477ebfd024b?auto=format&fit=crop&w=400&q=80"
+        ];
+
+        async function loadProducts() {
+            try {
+                const res = await fetch('/api/products');
+                products = await res.json();
+                renderProducts('All Products');
+            } catch(e) {
+                document.getElementById('products-grid').innerHTML = "<p class='loader'>Failed to load products.</p>";
+            }
+        }
+
+        function setFilter(element, category) {
+            tg.HapticFeedback.impactOccurred('light');
+            document.querySelectorAll('.filter-pill').forEach(el => el.classList.remove('active'));
+            element.classList.add('active');
+            renderProducts(category);
+        }
+
+        function renderProducts(filter) {
+            const grid = document.getElementById('products-grid');
+            grid.innerHTML = '';
+            
+            let filteredProducts = products;
+            if (filter !== 'All Products') {
+                filteredProducts = products.filter(p => p.category === filter);
+            }
+            
+            if (filteredProducts.length === 0) {
+                grid.innerHTML = "<div class='empty-state'>No products found in this category.</div>";
+                return;
+            }
+            
+            filteredProducts.forEach((p) => {
+                const imgIndex = (p.id - 1) % images.length;
+                const imgUrl = images[imgIndex];
+                const oldPrice = (p.price * 1.5).toFixed(2);
+                const rating = (4.5 + Math.random() * 0.5).toFixed(1); 
+                
+                const isAdded = cart[p.id] ? 'added' : '';
+                
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.innerHTML = `
+                    <div class="image-container">
+                        <img src="${imgUrl}" alt="${p.name}" loading="lazy">
+                        <span class="badge">SALE</span>
+                        <button class="add-cart-btn ${isAdded}" id="btn-${p.id}" onclick="toggleCart(${p.id})">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
+                        </button>
+                    </div>
+                    <div class="info">
+                        <div class="meta">
+                            <span class="category">${p.category}</span>
+                            <span class="rating"><span>★</span> ${rating}</span>
+                        </div>
+                        <div class="title">${p.name}</div>
+                        <div class="price-row">
+                            <span class="price">$${p.price.toFixed(2)}</span>
+                            <span class="old-price">$${oldPrice}</span>
+                        </div>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function toggleCart(id) {
+            tg.HapticFeedback.impactOccurred('medium');
+
+            const btn = document.getElementById(`btn-${id}`);
+            if(cart[id]) {
+                delete cart[id];
+                btn.classList.remove('added');
+            } else {
+                cart[id] = 1; 
+                btn.classList.add('added');
+            }
+            updateCheckoutBar();
+        }
+
+        function updateCheckoutBar() {
+            let total = 0;
+            let count = 0;
+            
+            for(let id in cart) {
+                const p = products.find(x => x.id == id);
+                if(p) {
+                    total += p.price * cart[id];
+                    count++;
+                }
+            }
+            
+            if(count > 0) {
+                tg.MainButton.setText(`CHECKOUT — $${total.toFixed(2)}`);
+                tg.MainButton.show();
+            } else {
+                tg.MainButton.hide();
+            }
+        }
+
+        loadProducts();
+    </script>
+</body>
+</html>
